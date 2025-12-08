@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+sqlalchemy
+paho-mqtt
+prophet
+groq
+python-dotenv
+apscheduler
+pydantic
+pydantic-settings
+pandas
