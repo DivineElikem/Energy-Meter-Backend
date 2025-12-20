@@ -6,7 +6,7 @@ A comprehensive IoT solution for real-time energy monitoring, featuring AI-power
 
 - **Real-time Monitoring**: Track energy consumption (Voltage, Current, Power) in real-time.
 - **AI Forecasting**: Predict future energy usage using Facebook Prophet.
-- **Anomaly Detection**: Automatically identify unusual consumption patterns using Machine Learning.
+- **Anomaly Detection**: Identifies unusual consumption patterns based on consumption threshold settings.
 - **Energy Boss Chatbot**: Interact with an AI assistant to get insights about your energy usage, powered by Groq (Llama 3).
 - **Responsive Dashboard**: Beautiful and intuitive UI built with Next.js and Tailwind CSS.
 - **MQTT Integration**: Scalable data collection from IoT devices.
