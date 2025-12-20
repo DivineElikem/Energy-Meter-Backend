@@ -1,0 +1,63 @@
+import {
+    Reading,
+    Device,
+    AnomalyResponse,
+    DailySummary,
+    ForecastResponse
+} from '../types';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options?.headers,
+        },
+    });
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
+        throw new Error(error.detail || response.statusText);
+    }
+
+    return response.json();
+}
+
+export const energyApi = {
+    // Readings
+    getLatestReadings: () => fetchApi<Reading[]>('/readings/latest'),
+    getDeviceReadings: (device: string, limit = 100) =>
+        fetchApi<Reading[]>(`/readings/device/${device}?limit=${limit}`),
+
+    // Analytics
+    getDailySummary: (date: string) =>
+        fetchApi<DailySummary>(`/analytics/daily-summary?day=${date}`),
+    getHighestConsumer: (date: string) =>
+        fetchApi<any>(`/analytics/highest-consumer?day=${date}`),
+
+    // Anomalies
+    getAnomalies: (device: string) =>
+        fetchApi<AnomalyResponse>(`/anomalies/${device}`),
+    setDeviceThreshold: (device: string, threshold: number) =>
+        fetchApi<Device>(`/anomalies/devices/${device}/threshold`, {
+            method: 'POST',
+            body: JSON.stringify({ threshold }),
+        }),
+    getDeviceThreshold: (device: string) =>
+        fetchApi<Device>(`/anomalies/devices/${device}/threshold`),
+    getAllDevices: () => fetchApi<Device[]>('/anomalies/devices'),
+
+    // Forecast
+
+    getForecast: (days = 7) =>
+        fetchApi<ForecastResponse>(`/forecast/?days=${days}`, { method: 'POST' }),
+
+    // Chatbot
+    queryChat: (question: string, sessionId: string) =>
+        fetchApi<{ answer: string }>('/chatbot/query', {
+            method: 'POST',
+            body: JSON.stringify({ question, session_id: sessionId }),
+        }),
+};

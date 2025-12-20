@@ -10,3 +10,10 @@ class Reading(Base):
     timestamp = Column(DateTime, default=datetime.utcnow)
     current = Column(Float)
     voltage = Column(Float)
+
+class Device(Base):
+    __tablename__ = "devices"
+
+    id = Column(String, primary_key=True, index=True) # Device name acts as ID
+    threshold = Column(Float, default=0.0)
+
