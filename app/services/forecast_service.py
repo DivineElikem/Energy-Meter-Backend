@@ -13,9 +13,14 @@ def generate_forecast(db: Session, days: int = 7):
     # Since readings are roughly every 10s (1/360 hours), weight is 1/360.
     # To get kWh, divide by 1000. Total factor: 1/360000.
     
-    # SQLite doesn't have date_trunc, so we use strftime
+    # Handle different database dialects for hourly grouping
+    if db.bind.dialect.name == 'postgresql':
+        group_col = func.to_char(Reading.timestamp, 'YYYY-MM-DD"T"HH24:00:00')
+    else:  # Default to SQLite
+        group_col = func.strftime('%Y-%m-%dT%H:00:00', Reading.timestamp)
+
     hourly_readings = db.query(
-        func.strftime('%Y-%m-%dT%H:00:00', Reading.timestamp).label('hour'),
+        group_col.label('hour'),
         func.sum(Reading.voltage * Reading.current * 10 / 3600000).label('energy_kwh')
     ).group_by('hour').all()
     

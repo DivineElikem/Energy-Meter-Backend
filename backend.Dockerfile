@@ -29,5 +29,5 @@ ENV PYTHONPATH=/app
 # Expose the API port
 EXPOSE 8000
 
-# Start the application
-CMD ["python", "-m", "app.main"]
+# Start the application with uvicorn
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
