@@ -4,7 +4,7 @@ services:
     name: energy-meter-backend
     env: docker
     dockerContext: .
-    dockerFilePath: backend.Dockerfile
+    dockerfilePath: backend.Dockerfile
     plan: free
     envVars:
       - key: DATABASE_URL
@@ -27,7 +27,7 @@ services:
     plan: free
     buildCommand: npm install && npm run build
     startCommand: npm run start
-    rootContext: frontend # Point to the frontend directory
+    rootDir: frontend # Point to the frontend directory
     envVars:
       - key: NEXT_PUBLIC_API_URL
         fromService:
