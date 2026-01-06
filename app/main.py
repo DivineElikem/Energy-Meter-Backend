@@ -9,9 +9,17 @@ from app.db.database import engine, Base
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    print("Starting up...")
     Base.metadata.create_all(bind=engine)
     start_mqtt_listener()
+
+    # Start simulator if enabled
+    if settings.START_SIMULATOR:
+        from app.utils.mqtt_simulator import run_simulator
+        import threading
+        print("🚀 Starting MQTT Simulator...")
+        simulator_thread = threading.Thread(target=run_simulator, daemon=True)
+        simulator_thread.start()
+
     yield
     # Shutdown
     print("Shutting down...")

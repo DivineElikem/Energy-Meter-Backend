@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     MQTT_PORT: int = 1883
     MQTT_TOPIC: str = "sensor/energy"
     GROQ_API_KEY: str = ""
+    START_SIMULATOR: bool = False
 
     class Config:
         env_file = ".env"

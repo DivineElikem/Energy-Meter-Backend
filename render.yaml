@@ -19,6 +19,8 @@ services:
         value: energy/readings
       - key: GROQ_API_KEY
         sync: false
+      - key: START_SIMULATOR
+        value: "true"
 
   # Frontend Next.js Service
   - type: web

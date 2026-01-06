@@ -4,10 +4,12 @@ import random
 import paho.mqtt.client as mqtt
 from datetime import datetime
 
-# Configuration
-BROKER = "broker.hivemq.com"
-PORT = 1883
-TOPIC = "sensor/energy"
+from app.config import settings
+
+# Configuration from app settings
+BROKER = settings.MQTT_BROKER
+PORT = settings.MQTT_PORT
+TOPIC = settings.MQTT_TOPIC
 
 DEVICES = ["bulb_1", "bulb_2", "socket_1", "socket_2"]
 
@@ -59,6 +61,10 @@ def main():
         print("Stopping simulator...")
         client.loop_stop()
         client.disconnect()
+
+def run_simulator():
+    """Starts the simulator in the current thread."""
+    main()
 
 if __name__ == "__main__":
     main()
