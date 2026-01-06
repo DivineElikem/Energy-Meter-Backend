@@ -4,7 +4,7 @@ services:
     name: energy-meter-backend
     env: docker
     dockerContext: .
-    dockerfile: backend.Dockerfile
+    dockerFilePath: backend.Dockerfile
     plan: free
     envVars:
       - key: DATABASE_URL
@@ -20,10 +20,6 @@ services:
       - key: GROQ_API_KEY
         sync: false
 
-databases:
-  - name: energy-meter-db
-    plan: free # Note: Free tier expires after 90 days
-
   # Frontend Next.js Service
   - type: web
     name: energy-meter-frontend
@@ -38,3 +34,7 @@ databases:
           type: web
           name: energy-meter-backend
           property: host
+
+databases:
+  - name: energy-meter-db
+    plan: free # Note: Free tier expires after 90 days
