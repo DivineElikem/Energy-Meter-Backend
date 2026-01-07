@@ -13,9 +13,13 @@ const getApiBaseUrl = () => {
 };
 
 const API_BASE_URL = getApiBaseUrl();
+console.log('🌐 API_BASE_URL initialized as:', API_BASE_URL);
 
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const url = `${API_BASE_URL}${endpoint}`;
+    console.log(`🔍 Fetching: ${url}`);
+
+    const response = await fetch(url, {
         ...options,
         headers: {
             'Content-Type': 'application/json',

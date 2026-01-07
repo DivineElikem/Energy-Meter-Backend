@@ -10,16 +10,24 @@ def get_readings_by_device(db: Session, device: str, limit: int = 100):
     return db.query(Reading).filter(Reading.device == device).order_by(Reading.timestamp.desc()).limit(limit).all()
 
 def get_latest_readings(db: Session):
-    """Get the latest reading for each device."""
-    # Get all unique device names from readings
-    devices = [r[0] for r in db.query(Reading.device).distinct().all()]
-    
-    latest_readings = []
-    for device in devices:
-        latest = db.query(Reading).filter(Reading.device == device).order_by(Reading.timestamp.desc()).first()
-        if latest:
-            latest_readings.append(latest)
-    return latest_readings
+    """Get the latest reading for each device with a fallback for empty states."""
+    try:
+        # 1. Try to get unique devices
+        device_names = [r[0] for r in db.query(Reading.device).distinct().all()]
+        
+        if not device_names:
+            # Fallback: if no distinct devices found, just get the last few readings to see if anything exists
+            return db.query(Reading).order_by(Reading.timestamp.desc()).limit(10).all()
+        
+        latest_readings = []
+        for device in device_names:
+            latest = db.query(Reading).filter(Reading.device == device).order_by(Reading.timestamp.desc()).first()
+            if latest:
+                latest_readings.append(latest)
+        return latest_readings
+    except Exception as e:
+        print(f"⚠️ Error in get_latest_readings: {e}")
+        return []
 
 def get_daily_usage(db: Session, date_val: datetime | date):
     """Calculate total energy usage per device for a specific day."""
@@ -102,17 +110,30 @@ def get_anomalies(db: Session, device_id: str, limit: int = 100):
     ).order_by(Reading.timestamp.desc()).limit(limit).all()
 
 def get_all_devices(db: Session):
-    # Get set thresholds
-    set_thresholds = {d.id: d.threshold for d in db.query(Device).all()}
+    """Get all devices and their thresholds, combining existing device records with unique names from readings."""
+    # 1. Get all unique device names from the database
+    device_names_from_readings = [r[0] for r in db.query(Reading.device).distinct().all()]
     
-    # Get all unique device names from readings
-    all_device_names = [r[0] for r in db.query(Reading.device).distinct().all()]
+    # 2. Get all defined devices from the devices table
+    defined_devices = {d.id: d.threshold for d in db.query(Device).all()}
     
+    # 3. Combine them
+    all_names = set(device_names_from_readings).union(defined_devices.keys())
+    
+    # If no data at all, return dummy devices for initial UI state
+    if not all_names:
+        return [
+            Device(id="bulb_1", threshold=2500.0),
+            Device(id="bulb_2", threshold=2500.0),
+            Device(id="socket_1", threshold=2500.0),
+            Device(id="socket_2", threshold=2500.0),
+        ]
+
     results = []
-    for name in all_device_names:
+    for name in all_names:
         results.append(Device(
             id=name,
-            threshold=set_thresholds.get(name, 2500.0) # Default to 2500W
+            threshold=defined_devices.get(name, 2500.0)
         ))
     return results
 
