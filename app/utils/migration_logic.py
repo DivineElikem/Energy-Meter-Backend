@@ -59,6 +59,22 @@ def run_auto_migration():
             sqlite_session.close()
             pg_session.close()
 
-    # Run in a background thread to not block app startup
     migration_thread = threading.Thread(target=migrate, daemon=True)
     migration_thread.start()
+
+def sync_postgres_sequences():
+    """Resets PostgreSQL sequences to the current maximum ID to avoid collisions."""
+    if not settings.DATABASE_URL.startswith("postgresql"):
+        return
+
+    from sqlalchemy import text
+    try:
+        engine = create_engine(settings.DATABASE_URL)
+        with engine.connect() as conn:
+            # Sync the 'readings' table sequence
+            # Note: We use pg_get_serial_sequence to get the actual sequence name
+            conn.execute(text("SELECT setval(pg_get_serial_sequence('readings', 'id'), (SELECT MAX(id) FROM readings))"))
+            conn.commit()
+            print("🔗 PostgreSQL sequences synchronized.")
+    except Exception as e:
+        print(f"⚠️ Could not sync sequences (may be empty or not Postgres): {e}")
