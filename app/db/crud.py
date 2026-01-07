@@ -11,15 +11,15 @@ def get_readings_by_device(db: Session, device: str, limit: int = 100):
 
 def get_latest_readings(db: Session):
     """Get the latest reading for each device."""
-    subquery = db.query(
-        Reading.device,
-        func.max(Reading.timestamp).label('max_timestamp')
-    ).group_by(Reading.device).subquery()
-
-    return db.query(Reading).join(
-        subquery,
-        (Reading.device == subquery.c.device) & (Reading.timestamp == subquery.c.max_timestamp)
-    ).all()
+    # Get all unique device names from readings
+    devices = [r[0] for r in db.query(Reading.device).distinct().all()]
+    
+    latest_readings = []
+    for device in devices:
+        latest = db.query(Reading).filter(Reading.device == device).order_by(Reading.timestamp.desc()).first()
+        if latest:
+            latest_readings.append(latest)
+    return latest_readings
 
 def get_daily_usage(db: Session, date_val: datetime | date):
     """Calculate total energy usage per device for a specific day."""

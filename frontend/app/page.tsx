@@ -117,21 +117,27 @@ export default function Home() {
           </button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {latestReadings.map((reading) => {
-            const device = devices.find(d => d.id === reading.device);
-            const isAnomaly = device && (reading.current * reading.voltage) > device.threshold;
+          {latestReadings.length === 0 ? (
+            <div className="col-span-full bg-white p-8 rounded-2xl border border-slate-100 text-center">
+              <p className="text-slate-500 font-medium whitespace-pre-wrap">{"No live data received yet.\nCheck if the MQTT simulator is running and connected to the backend."}</p>
+            </div>
+          ) : (
+            latestReadings.map((reading) => {
+              const device = devices.find(d => d.id === reading.device);
+              const isAnomaly = device && (reading.current * reading.voltage) > device.threshold;
 
-            return (
-              <DeviceCard
-                key={reading.id}
-                name={reading.device}
-                status={isAnomaly ? 'anomaly' : 'normal'}
-                currentPower={reading.current * reading.voltage}
-                energyToday={dailySummary?.device_breakdown?.find(d => d.device === reading.device)?.total_energy || 0}
-                lastUpdate={new Date(reading.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              />
-            );
-          })}
+              return (
+                <DeviceCard
+                  key={reading.id}
+                  name={reading.device}
+                  status={isAnomaly ? 'anomaly' : 'normal'}
+                  currentPower={reading.current * reading.voltage}
+                  energyToday={dailySummary?.device_breakdown?.find(d => d.device === reading.device)?.total_energy || 0}
+                  lastUpdate={new Date(reading.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                />
+              );
+            })
+          )}
         </div>
       </section>
 
