@@ -12,6 +12,10 @@ async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     start_mqtt_listener()
 
+    # Trigger auto-migration if SQLite file is found
+    from app.utils.migration_logic import run_auto_migration
+    run_auto_migration()
+
     # Start simulator if enabled
     if settings.START_SIMULATOR:
         from app.utils.mqtt_simulator import run_simulator

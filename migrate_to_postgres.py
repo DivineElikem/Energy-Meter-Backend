@@ -15,8 +15,17 @@ def migrate_data(sqlite_url: str, postgres_url: str):
     SqliteSession = sessionmaker(bind=sqlite_engine)
     sqlite_session = SqliteSession()
 
-    # Connect to PostgreSQL
-    pg_engine = create_engine(postgres_url)
+    # Connect to PostgreSQL with SSL required for Render
+    # We also add pool_pre_ping to handle dropped connections better
+    if "sslmode" not in postgres_url:
+        separator = "&" if "?" in postgres_url else "?"
+        postgres_url += f"{separator}sslmode=require"
+
+    pg_engine = create_engine(
+        postgres_url, 
+        pool_pre_ping=True,
+        connect_args={"sslmode": "require"}
+    )
     PgSession = sessionmaker(bind=pg_engine)
     pg_session = PgSession()
 
@@ -28,21 +37,29 @@ def migrate_data(sqlite_url: str, postgres_url: str):
         devices = sqlite_session.query(Device).all()
         print(f"📦 Migrating {len(devices)} devices...")
         for dev in devices:
-            # Check if device already exists to avoid duplicates
-            if not pg_session.query(Device).filter_by(id=dev.id).first():
-                pg_session.merge(dev)
-        
+            pg_session.merge(dev)
         pg_session.commit()
 
-        # 2. Migrate Readings
-        readings = sqlite_session.query(Reading).all()
-        print(f"📈 Migrating {len(readings)} readings...")
-        for r in readings:
-            # Check if reading already exists (optional but safer)
-            pg_session.merge(r)
+        # 2. Migrate Readings in Chunks
+        total_readings = sqlite_session.query(Reading).count()
+        print(f"📈 Migrating {total_readings} readings in batches of 500...")
         
-        pg_session.commit()
-        print("✅ Migration completed successfully!")
+        batch_size = 500
+        count = 0
+        
+        while count < total_readings:
+            # Fetch a chunk from SQLite
+            chunk = sqlite_session.query(Reading).offset(count).limit(batch_size).all()
+            
+            for r in chunk:
+                # Merge into Postgres
+                pg_session.merge(r)
+            
+            pg_session.commit()
+            count += len(chunk)
+            print(f"✅ Progress: {count}/{total_readings} ({(count/total_readings)*100:.1f}%)")
+
+        print("🎉 Migration completed successfully!")
 
     except Exception as e:
         pg_session.rollback()
