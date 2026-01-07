@@ -7,7 +7,13 @@ import {
 } from '../types';
 
 const getApiBaseUrl = () => {
-    const url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    let url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+    // If it looks like a Render service name without a domain (no dots)
+    if (!url.includes('.') && !url.includes('localhost')) {
+        url = `${url}.onrender.com`;
+    }
+
     if (url.startsWith('http')) return url;
     return `https://${url}`;
 };
