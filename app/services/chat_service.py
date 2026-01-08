@@ -19,52 +19,65 @@ import json
 
 def get_context(db: Session):
     """Fetches comprehensive context from the database for the chatbot."""
-    # 1. Real-time Status
-    latest = crud.get_latest_readings(db)
-    devices = crud.get_all_devices(db)
-    device_map = {d.id: d.threshold for d in devices}
-    
-    # 2. Daily Summary (Today & Yesterday)
-    today = date.today()
-    yesterday = today - timedelta(days=1)
-    today_stats = crud.get_daily_usage(db, today)
-    yesterday_stats = crud.get_daily_usage(db, yesterday)
-    
-    # 3. Recent Anomalies (Last 24 hours)
-    anomaly_summary = crud.get_recent_anomalies(db, hours=24)
-    
-    # 4. Forecasts (Next 3 days)
-    forecast_data = generate_forecast(db, days=3)
-    if isinstance(forecast_data, list):
-        # Summarize forecast for the LLM
-        forecast_summary = sum(item['predicted_energy'] for item in forecast_data)
-    else:
-        forecast_summary = "No forecast available."
+    try:
+        print("DEBUG: Fetching chatbot context...")
+        # 1. Real-time Status
+        latest = crud.get_latest_readings(db)
+        devices = crud.get_all_devices(db)
+        device_map = {d.id: d.threshold for d in devices}
+        print(f"DEBUG: Found {len(latest)} latest readings and {len(devices)} devices")
+        
+        # 2. Daily Summary (Today & Yesterday)
+        today = date.today()
+        yesterday = today - timedelta(days=1)
+        today_stats = crud.get_daily_usage(db, today)
+        yesterday_stats = crud.get_daily_usage(db, yesterday)
+        print(f"DEBUG: Usage stats fetched for today and yesterday")
+        
+        # 3. Recent Anomalies (Last 24 hours)
+        anomaly_summary = crud.get_recent_anomalies(db, hours=24)
+        print(f"DEBUG: Anomaly summary count: {len(anomaly_summary)}")
+        
+        # 4. Forecasts (Next 3 days)
+        print("DEBUG: Generating forecast...")
+        forecast_data = generate_forecast(db, days=3)
+        if isinstance(forecast_data, list):
+            # Summarize forecast for the LLM
+            forecast_summary = sum(item['predicted_energy'] for item in forecast_data)
+            print(f"DEBUG: Forecast total: {forecast_summary}")
+        else:
+            forecast_summary = "No forecast available."
+            print(f"DEBUG: Forecast not available: {forecast_data}")
 
-    context = f"CURRENT STATUS (as of {datetime.now()}):\n"
-    for r in latest:
-        power = r.voltage * r.current
-        threshold = device_map.get(r.device, 2500.0)
-        status = "ANOMALY" if power > threshold else "NORMAL"
-        context += f"- {r.device}: {round(power, 1)}W ({status}, Limit: {threshold}W)\n"
+        context = f"CURRENT STATUS (as of {datetime.now()}):\n"
+        for r in latest:
+            power = (r.voltage or 0) * (r.current or 0)
+            threshold = device_map.get(r.device, 2500.0)
+            status = "ANOMALY" if power > threshold else "NORMAL"
+            context += f"- {r.device}: {round(power, 1)}W ({status}, Limit: {threshold}W)\n"
+            
+        context += f"\nDAILY TOTALS:\n"
+        context += f"- Today ({today}): {sum(d['total_energy'] for d in today_stats):.3f} kWh\n"
+        context += f"- Yesterday ({yesterday}): {sum(d['total_energy'] for d in yesterday_stats):.3f} kWh\n"
         
-    context += f"\nDAILY TOTALS:\n"
-    context += f"- Today ({today}): {sum(d['total_energy'] for d in today_stats):.3f} kWh\n"
-    context += f"- Yesterday ({yesterday}): {sum(d['total_energy'] for d in yesterday_stats):.3f} kWh\n"
-    
-    if anomaly_summary:
-        context += f"\nRECENT ANOMALIES (Last 24h):\n"
-        for dev, count in anomaly_summary.items():
-            context += f"- {dev}: {count} detections\n"
-    else:
-        context += "\nNO ANOMALIES in the last 24 hours.\n"
+        if anomaly_summary:
+            context += f"\nRECENT ANOMALIES (Last 24h):\n"
+            for dev, count in anomaly_summary.items():
+                context += f"- {dev}: {count} detections\n"
+        else:
+            context += "\nNO ANOMALIES in the last 24 hours.\n"
+            
+        context += f"\nFORECAST (Next 3 days):\n"
+        context += f"- Predicted Total: {forecast_summary if isinstance(forecast_summary, str) else f'{forecast_summary:.3f} kWh'}\n"
         
-    context += f"\nFORECAST (Next 3 days):\n"
-    context += f"- Predicted Total: {forecast_summary if isinstance(forecast_summary, str) else f'{forecast_summary:.3f} kWh'}\n"
-    
-    context += "\nCURRENCY NOTE: All financial figures are in Ghana Cedis (GHC). Rate: 2.20 GHC/kWh.\n"
-    
-    return context
+        context += "\nCURRENCY NOTE: All financial figures are in Ghana Cedis (GHC). Rate: 2.20 GHC/kWh.\n"
+        
+        return context
+    except Exception as e:
+        print(f"CRITICAL: Context generation failed: {e}")
+        import traceback
+        print(traceback.format_exc())
+        return "Energy context is currently unavailable."
 
 
 # Tool definition for Groq
@@ -124,6 +137,7 @@ def ask_chatbot(question: str, session_id: str, db: Session):
     messages = [{"role": "system", "content": system_prompt}] + chat_sessions[session_id]
     
     try:
+        print(f"DEBUG: Calling Groq for session {session_id}")
         response = client.chat.completions.create(
             messages=messages,
             model="llama-3.1-8b-instant",
@@ -135,11 +149,13 @@ def ask_chatbot(question: str, session_id: str, db: Session):
         
         # Handle Tool Calls
         if response_message.tool_calls:
+            print("DEBUG: LLM requested tool calls")
             messages.append(response_message)
             
             for tool_call in response_message.tool_calls:
                 function_name = tool_call.function.name
                 function_args = json.loads(tool_call.function.arguments)
+                print(f"DEBUG: Tool Call: {function_name} with args {function_args}")
                 
                 if function_name == "set_device_threshold":
                     result = crud.create_or_update_device(
@@ -171,6 +187,9 @@ def ask_chatbot(question: str, session_id: str, db: Session):
         return answer
         
     except Exception as e:
-        print(f"Groq API Error: {e}")
+        import traceback
+        error_detail = traceback.format_exc()
+        print(f"CRITICAL: Chatbot error: {e}")
+        print(f"FULL TRACEBACK:\n{error_detail}")
         return "I'm sorry, I'm having trouble connecting to my brain right now. 🤯"
 
