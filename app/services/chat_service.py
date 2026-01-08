@@ -8,7 +8,7 @@ from datetime import datetime, date, timedelta
 
 # Initialize Groq client
 # Ensure GROQ_API_KEY is set in .env
-client = Groq(api_key=settings.GROQ_API_KEY)
+client = Groq(api_key=settings.GROQ_API_KEY.strip())
 
 # In-memory store for chat sessions
 # Format: {session_id: [{"role": "user", "content": "..."}, ...]}
