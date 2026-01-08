@@ -137,7 +137,6 @@ def ask_chatbot(question: str, session_id: str, db: Session):
     messages = [{"role": "system", "content": system_prompt}] + chat_sessions[session_id]
     
     try:
-        print(f"DEBUG: Calling Groq for session {session_id}")
         response = client.chat.completions.create(
             messages=messages,
             model="llama-3.1-8b-instant",
@@ -149,7 +148,6 @@ def ask_chatbot(question: str, session_id: str, db: Session):
         
         # Handle Tool Calls
         if response_message.tool_calls:
-            print("DEBUG: LLM requested tool calls")
             messages.append(response_message)
             
             for tool_call in response_message.tool_calls:

@@ -37,6 +37,8 @@ export interface ForecastItem {
 
 export interface ForecastResponse {
     forecast: ForecastItem[];
+    outlook: string;
+    tip: string;
 }
 
 export interface ChatMessage {

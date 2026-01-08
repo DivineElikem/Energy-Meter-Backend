@@ -7,4 +7,6 @@ class ForecastPoint(BaseModel):
 
 class ForecastResponse(BaseModel):
     forecast: List[ForecastPoint]
+    outlook: str = ""
+    tip: str = ""
 

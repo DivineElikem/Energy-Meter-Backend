@@ -15,8 +15,6 @@ def get_energy_forecast(
     
     if isinstance(forecast_data, dict) and "message" in forecast_data:
         # Handle error case (not enough data)
-        # For now, return empty list or raise HTTP exception. 
-        # Let's return empty list to match schema, but maybe with a warning log.
-        return {"forecast": []}
+        return {"forecast": [], "outlook": "Not enough data for outlook.", "tip": "Keep the system running!"}
 
-    return {"forecast": forecast_data}
+    return forecast_data

@@ -47,5 +47,36 @@ def generate_forecast(db: Session, days: int = 7):
             "predicted_energy": round(max(0, row['yhat']), 4)
         })
         
-    return forecast_data
+    # Generate dynamic insights
+    outlook = "Stable usage expected for the coming days."
+    tip = "Maintain your current energy-saving habits!"
+    
+    if len(forecast_data) >= 48: # Need at least 2 days of forecast
+        today_total = sum(d['predicted_energy'] for d in forecast_data[:24])
+        tomorrow_total = sum(d['predicted_energy'] for d in forecast_data[24:48])
+        
+        if today_total > 0:
+            diff = ((tomorrow_total - today_total) / today_total) * 100
+            if diff > 5:
+                outlook = f"Predicted {abs(round(diff, 1))}% increase in usage tomorrow compared to today."
+                tip = "Consider turning off non-essential appliances during peak hours to save on costs."
+            elif diff < -5:
+                outlook = f"Great news! We expect a {abs(round(diff, 1))}% decrease in your energy usage tomorrow."
+                tip = "Keep up the efficient usage patterns you've established!"
+            else:
+                outlook = "Your energy usage is expected to remain steady tomorrow."
+                
+        # Find peak hour for tip
+        tomorrow_data = forecast_data[24:48]
+        peak_reading = max(tomorrow_data, key=lambda x: x['predicted_energy'])
+        peak_hour = datetime.strptime(peak_reading['date'], '%Y-%m-%d %H:%M').strftime('%I:%M %p')
+        
+        if peak_reading['predicted_energy'] > 0.5: # Only warn if significant
+            tip = f"Heads up: Your peak usage tomorrow is predicted at {peak_hour}. Shifting heavy tasks away from this time can save you ~GHC {(peak_reading['predicted_energy'] * 0.3 * 2.2).toFixed(2) if hasattr(peak_reading['predicted_energy'], 'toFixed') else round(peak_reading['predicted_energy'] * 0.3 * 2.2, 2)}."
+
+    return {
+        "forecast": forecast_data,
+        "outlook": outlook,
+        "tip": tip
+    }
 

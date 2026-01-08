@@ -19,6 +19,8 @@ import { ForecastItem } from '@/types';
 export default function ForecastPage() {
     const [duration, setDuration] = useState(7);
     const [forecastData, setForecastData] = useState<ForecastItem[]>([]);
+    const [outlook, setOutlook] = useState("");
+    const [tip, setTip] = useState("");
     const [loading, setLoading] = useState(true);
 
     const fetchForecast = async (days: number) => {
@@ -26,6 +28,8 @@ export default function ForecastPage() {
         try {
             const data = await energyApi.getForecast(days);
             setForecastData(data.forecast);
+            setOutlook(data.outlook);
+            setTip(data.tip);
         } catch (error) {
             console.error('Error fetching forecast:', error);
         } finally {
@@ -135,21 +139,29 @@ export default function ForecastPage() {
 
             {/* Insights Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                <div className="bg-blue-50/50 rounded-[1.5rem] md:rounded-3xl p-5 md:p-6 border border-blue-100">
+                <div className="bg-blue-50/50 rounded-[1.5rem] md:rounded-3xl p-5 md:p-6 border border-blue-100 min-h-[120px]">
                     <h4 className="font-bold text-blue-900 flex items-center gap-2 mb-2 md:mb-3">
                         <Lightbulb size={18} /> Tomorrow's Outlook
                     </h4>
-                    <p className="text-blue-800 text-sm leading-relaxed font-medium">
-                        Based on your past habits, we expect a 12% increase in usage tomorrow, mainly during the evening hours.
-                    </p>
+                    {loading ? (
+                        <div className="h-4 bg-blue-100 rounded w-3/4 animate-pulse"></div>
+                    ) : (
+                        <p className="text-blue-800 text-sm leading-relaxed font-medium">
+                            {outlook || "No specific outlook available yet."}
+                        </p>
+                    )}
                 </div>
-                <div className="bg-purple-50/50 rounded-[1.5rem] md:rounded-3xl p-5 md:p-6 border border-purple-100">
+                <div className="bg-purple-50/50 rounded-[1.5rem] md:rounded-3xl p-5 md:p-6 border border-purple-100 min-h-[120px]">
                     <h4 className="font-bold text-purple-900 flex items-center gap-2 mb-2 md:mb-3">
                         ✨ Energy Saving Tip
                     </h4>
-                    <p className="text-purple-800 text-sm leading-relaxed font-medium">
-                        Shifting heavy appliance usage to before 4:00 PM could reduce your estimated weekly cost by GHC 35.00.
-                    </p>
+                    {loading ? (
+                        <div className="h-4 bg-purple-100 rounded w-3/4 animate-pulse"></div>
+                    ) : (
+                        <p className="text-purple-800 text-sm leading-relaxed font-medium">
+                            {tip || "No specific saving tips available based on current data."}
+                        </p>
+                    )}
                 </div>
             </div>
 
