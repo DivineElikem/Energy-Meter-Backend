@@ -27,6 +27,7 @@ export interface DeviceStats {
 export interface DailySummary {
     date: string;
     total_energy: number;
+    power_trend: number;
     device_breakdown: DeviceStats[];
 }
 

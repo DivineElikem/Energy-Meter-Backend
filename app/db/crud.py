@@ -160,6 +160,32 @@ def get_recent_anomalies(db: Session, hours: int = 24):
             
     return anomalies_summary
 
+def get_power_trend(db: Session, window_minutes: int = 5):
+    """Calculates the trend for power draw.
+    Compares the average power of the last 'window' minutes with the average power of the 'window' minutes before that.
+    """
+    now = datetime.now()
+    window_start = now - timedelta(minutes=window_minutes)
+    previous_window_start = now - timedelta(minutes=window_minutes * 2)
+
+    # Current window average power
+    current_avg = db.query(func.avg(Reading.voltage * Reading.current)).filter(
+        Reading.timestamp >= window_start,
+        Reading.timestamp < now
+    ).scalar() or 0.0
+
+    # Previous window average power
+    previous_avg = db.query(func.avg(Reading.voltage * Reading.current)).filter(
+        Reading.timestamp >= previous_window_start,
+        Reading.timestamp < window_start
+    ).scalar() or 0.0
+
+    if previous_avg == 0:
+        return 0.0 # No trend possible without historical data
+    
+    trend_percentage = ((current_avg - previous_avg) / previous_avg) * 100
+    return round(trend_percentage, 1)
+
 
 
 

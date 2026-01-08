@@ -11,4 +11,5 @@ class DeviceStats(BaseModel):
 class DailySummary(BaseModel):
     date: str
     total_energy: float
+    power_trend: float = 0.0
     device_breakdown: List[DeviceStats]

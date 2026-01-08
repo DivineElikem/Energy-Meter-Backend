@@ -84,7 +84,10 @@ export default function Home() {
           unit="W"
           icon={Zap}
           color="bg-blue-500"
-          trend={{ value: 12, isUp: false }}
+          trend={{
+            value: Math.abs(dailySummary?.power_trend || 0),
+            isUp: (dailySummary?.power_trend || 0) > 0
+          }}
         />
         <StatCard
           title="Energy Today"

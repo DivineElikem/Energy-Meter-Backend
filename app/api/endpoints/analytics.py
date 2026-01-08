@@ -16,12 +16,15 @@ def get_daily_summary(
     dt = datetime.combine(day, datetime.min.time())
     
     device_stats = crud.get_daily_usage(db, dt)
-    
     total_energy = sum(d["total_energy"] for d in device_stats)
+    
+    # Calculate power trend (percentage)
+    power_trend = crud.get_power_trend(db)
     
     return {
         "date": day.isoformat(),
         "total_energy": round(total_energy, 6),
+        "power_trend": power_trend,
         "device_breakdown": device_stats
     }
 
