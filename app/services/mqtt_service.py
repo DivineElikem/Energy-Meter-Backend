@@ -31,6 +31,8 @@ def on_connect(client, userdata, flags, rc):
     else:
         print(f"❌ Failed to connect, return code {rc}")
 
+from app.services.protection_service import check_and_trigger_cutoff
+
 def on_message(client, userdata, msg):
     try:
         topic = msg.topic
@@ -41,6 +43,8 @@ def on_message(client, userdata, msg):
         db = SessionLocal()
         try:
             save_reading(payload, db)
+            # Run protection logic after saving the reading
+            check_and_trigger_cutoff(payload, db)
         finally:
             db.close()
     except Exception as e:
