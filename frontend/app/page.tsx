@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import StatCard from '@/components/StatCard';
 import DeviceCard from '@/components/DeviceCard';
+import DeviceControl from '@/components/DeviceControl';
 import { energyApi } from '@/services/api';
 import { Reading, DailySummary, Device } from '@/types';
 import ReactMarkdown from 'react-markdown';
@@ -110,6 +111,9 @@ export default function Home() {
           color="bg-green-500"
         />
       </div>
+
+      {/* Device Control Section */}
+      <DeviceControl />
 
       {/* Device Grid */}
       <section>

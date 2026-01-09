@@ -3,7 +3,8 @@ import {
     Device,
     AnomalyResponse,
     DailySummary,
-    ForecastResponse
+    ForecastResponse,
+    RelayStates
 } from '../types';
 
 const getApiBaseUrl = () => {
@@ -75,5 +76,13 @@ export const energyApi = {
         fetchApi<{ answer: string }>('/chatbot/query', {
             method: 'POST',
             body: JSON.stringify({ question, session_id: sessionId }),
+        }),
+
+    // Device Control
+    getRelayStates: () => fetchApi<RelayStates>('/devices/'),
+    updateRelayState: (relayId: string, state: boolean) =>
+        fetchApi<{ relay_id: string; state: boolean }>(`/devices/${relayId}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ state }),
         }),
 };

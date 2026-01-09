@@ -8,6 +8,9 @@ class Settings(BaseSettings):
     MQTT_TOPIC: str = "sensor/energy"
     GROQ_API_KEY: str = ""
     START_SIMULATOR: bool = True
+    FIREBASE_SERVICE_ACCOUNT: str = "app/utils/smart-energy-meter-4a732-firebase-adminsdk-fbsvc-dbd5bd6660.json"
+    FIREBASE_SERVICE_ACCOUNT_JSON: str = "" # Full JSON string for production
+    FIREBASE_DATABASE_URL: str = "https://smart-energy-meter-4a732-default-rtdb.firebaseio.com/"
 
     class Config:
         env_file = ".env"

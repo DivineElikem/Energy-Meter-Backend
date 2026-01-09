@@ -11,6 +11,10 @@ export interface Device {
     threshold: number;
 }
 
+export interface RelayStates {
+    [key: string]: boolean;
+}
+
 export interface AnomalyResponse {
     device_id: string;
     threshold: number;

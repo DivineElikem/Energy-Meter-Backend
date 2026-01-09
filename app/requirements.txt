@@ -10,3 +10,4 @@ pydantic
 pydantic-settings
 pandas
 psycopg2-binary
+firebase-admin

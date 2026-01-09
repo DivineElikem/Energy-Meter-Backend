@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.config import settings
-from app.api.endpoints import readings, analytics, forecast, chatbot, health, anomalies
+from app.api.endpoints import readings, analytics, forecast, chatbot, health, anomalies, devices
 from app.services.mqtt_service import start_mqtt_listener, stop_mqtt_listener
 from app.db.database import engine, Base
 
@@ -52,6 +52,7 @@ app.include_router(forecast.router, prefix="/forecast", tags=["Forecast"])
 app.include_router(chatbot.router, prefix="/chatbot", tags=["Chatbot"])
 app.include_router(health.router, prefix="/health", tags=["Health"])
 app.include_router(anomalies.router, prefix="/anomalies", tags=["Anomalies"])
+app.include_router(devices.router, prefix="/devices", tags=["Devices"])
 
 @app.get("/")
 def root():
