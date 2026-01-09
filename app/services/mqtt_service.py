@@ -25,14 +25,18 @@ def save_reading(payload: dict, db: Session):
 
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
-        print("Connected to MQTT Broker!")
+        print("✅ Connected to MQTT Broker!")
         client.subscribe(settings.MQTT_TOPIC)
+        print(f"📡 Subscribed to topic: {settings.MQTT_TOPIC}")
     else:
-        print(f"Failed to connect, return code {rc}")
+        print(f"❌ Failed to connect, return code {rc}")
 
 def on_message(client, userdata, msg):
     try:
-        payload = json.loads(msg.payload.decode())
+        topic = msg.topic
+        payload_raw = msg.payload.decode()
+        print(f"📩 Received message on {topic}: {payload_raw}")
+        payload = json.loads(payload_raw)
         # Create a new database session for each message
         db = SessionLocal()
         try:
@@ -40,9 +44,11 @@ def on_message(client, userdata, msg):
         finally:
             db.close()
     except Exception as e:
-        print(f"Error processing message: {e}")
+        print(f"⚠️ Error processing message: {e}")
 
-mqtt_client = mqtt.Client()
+from paho.mqtt.client import CallbackAPIVersion
+
+mqtt_client = mqtt.Client(CallbackAPIVersion.VERSION1)
 mqtt_client.on_connect = on_connect
 mqtt_client.on_message = on_message
 

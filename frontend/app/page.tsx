@@ -45,10 +45,12 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  const totalCurrentPower = latestReadings.reduce((sum, r) => sum + (r.current * r.voltage), 0);
+  const liveReadings = latestReadings.filter(r => !r.device.startsWith('socket_'));
+
+  const totalCurrentPower = liveReadings.reduce((sum, r) => sum + (r.current * r.voltage), 0);
 
   // Calculate anomalies dynamically
-  const activeAnomaliesCount = latestReadings.filter(r => {
+  const activeAnomaliesCount = liveReadings.filter(r => {
     const device = devices.find(d => d.id === r.device);
     return device && (r.current * r.voltage) > device.threshold;
   }).length;
@@ -118,7 +120,7 @@ export default function Home() {
       {/* Device Grid */}
       <section>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-slate-900">Connected Devices</h2>
+          <h2 className="text-xl font-bold text-slate-900">Connected Appliances</h2>
           <button className="text-sm font-bold text-blue-600 hover:text-blue-700 transition-colors">
             Manage All
           </button>
@@ -126,24 +128,27 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {latestReadings.length === 0 ? (
             <div className="col-span-full bg-white p-8 rounded-2xl border border-slate-100 text-center">
-              <p className="text-slate-500 font-medium whitespace-pre-wrap">{"No live data received yet.\nCheck if the MQTT simulator is running and connected to the backend."}</p>
+              <p className="text-slate-500 font-medium whitespace-pre-wrap">{"No live data received yet.\nCheck if the Firebase sync is running and connected."}</p>
             </div>
           ) : (
-            latestReadings.map((reading) => {
-              const device = devices.find(d => d.id === reading.device);
-              const isAnomaly = device && (reading.current * reading.voltage) > device.threshold;
+            latestReadings
+              .filter(r => !r.device.startsWith('socket_')) // Hide individual sockets if they somehow appear
+              .map((reading) => {
+                const device = devices.find(d => d.id === reading.device);
+                const isAnomaly = device && (reading.current * reading.voltage) > device.threshold;
+                const displayName = reading.device === 'sockets' ? 'Combined Sockets' : reading.device.replace('_', ' ');
 
-              return (
-                <DeviceCard
-                  key={reading.id}
-                  name={reading.device}
-                  status={isAnomaly ? 'anomaly' : 'normal'}
-                  currentPower={reading.current * reading.voltage}
-                  energyToday={dailySummary?.device_breakdown?.find(d => d.device === reading.device)?.total_energy || 0}
-                  lastUpdate={new Date(reading.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                />
-              );
-            })
+                return (
+                  <DeviceCard
+                    key={reading.device}
+                    name={displayName}
+                    status={isAnomaly ? 'anomaly' : 'normal'}
+                    currentPower={reading.current * reading.voltage}
+                    energyToday={dailySummary?.device_breakdown?.find(d => d.device === reading.device)?.total_energy || 0}
+                    lastUpdate={new Date(reading.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  />
+                );
+              })
           )}
         </div>
       </section>

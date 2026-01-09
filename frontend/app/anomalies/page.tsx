@@ -8,14 +8,14 @@ import ReactMarkdown from 'react-markdown';
 
 
 export default function AnomaliesPage() {
-    const [selectedDevice, setSelectedDevice] = useState('socket_1');
+    const [selectedDevice, setSelectedDevice] = useState('sockets');
     const [anomalies, setAnomalies] = useState<Reading[]>([]);
     const [loading, setLoading] = useState(true);
     const [threshold, setThreshold] = useState<number>(0);
     const [isEditing, setIsEditing] = useState(false);
     const [editThreshold, setEditThreshold] = useState<number>(0);
 
-    const devices = ['socket_1', 'socket_2', 'bulb_1', 'bulb_2'];
+    const devices = ['sockets', 'bulb_1', 'bulb_2'];
 
     const fetchData = async () => {
         setLoading(true);
@@ -73,7 +73,7 @@ export default function AnomaliesPage() {
                                     : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-100'
                                     }`}
                             >
-                                {device.replace('_', ' ')}
+                                {device === 'sockets' ? 'Combined Sockets' : device.replace('_', ' ')}
                             </button>
                         ))}
                     </div>
