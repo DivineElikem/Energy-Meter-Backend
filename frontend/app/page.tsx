@@ -51,8 +51,9 @@ export default function Home() {
 
   // Calculate anomalies dynamically
   const activeAnomaliesCount = liveReadings.filter(r => {
-    const device = devices.find(d => d.id === r.device);
-    return device && (r.current * r.voltage) > device.threshold;
+    const deviceConfig = devices.find(d => d.id === r.device);
+    const threshold = deviceConfig ? deviceConfig.threshold : 2500.0;
+    return (r.current * r.voltage) > threshold;
   }).length;
 
 
@@ -69,7 +70,7 @@ export default function Home() {
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Energy Overview</h1>
-          <p className="text-slate-500 font-medium">Monitoring {latestReadings.length} connected devices</p>
+          <p className="text-slate-500 font-medium">Monitoring {liveReadings.length} active devices</p>
         </div>
         <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl shadow-sm border border-slate-100">
           <Clock size={16} className="text-blue-500" />
@@ -109,7 +110,7 @@ export default function Home() {
           title="Estimated Daily Cost"
           value={((dailySummary?.total_energy || 0) * 2.20).toFixed(2)}
           unit="GHC"
-          icon={ArrowUpRight}
+          icon={Zap}
           color="bg-green-500"
         />
       </div>
@@ -126,29 +127,29 @@ export default function Home() {
           </button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {latestReadings.length === 0 ? (
+          {liveReadings.length === 0 ? (
             <div className="col-span-full bg-white p-8 rounded-2xl border border-slate-100 text-center">
               <p className="text-slate-500 font-medium whitespace-pre-wrap">{"No live data received yet.\nCheck if the Firebase sync is running and connected."}</p>
             </div>
           ) : (
-            latestReadings
-              .filter(r => !r.device.startsWith('socket_')) // Hide individual sockets if they somehow appear
-              .map((reading) => {
-                const device = devices.find(d => d.id === reading.device);
-                const isAnomaly = device && (reading.current * reading.voltage) > device.threshold;
-                const displayName = reading.device === 'sockets' ? 'Combined Sockets' : reading.device.replace('_', ' ');
+            liveReadings.map((reading) => {
+              const deviceConfig = devices.find(d => d.id === reading.device);
+              const threshold = deviceConfig ? deviceConfig.threshold : 2500.0;
+              const isAnomaly = (reading.current * reading.voltage) > threshold;
+              const displayName = reading.device === 'sockets' ? 'Combined Sockets' : reading.device.replace('_', ' ');
 
-                return (
-                  <DeviceCard
-                    key={reading.device}
-                    name={displayName}
-                    status={isAnomaly ? 'anomaly' : 'normal'}
-                    currentPower={reading.current * reading.voltage}
-                    energyToday={dailySummary?.device_breakdown?.find(d => d.device === reading.device)?.total_energy || 0}
-                    lastUpdate={new Date(reading.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  />
-                );
-              })
+              return (
+                <DeviceCard
+                  key={reading.device}
+                  name={displayName}
+                  status={isAnomaly ? 'anomaly' : 'normal'}
+                  currentPower={reading.current * reading.voltage}
+                  threshold={threshold}
+                  energyToday={dailySummary?.device_breakdown?.find(d => d.device === reading.device)?.total_energy || 0}
+                  lastUpdate={new Date(reading.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                />
+              );
+            })
           )}
         </div>
       </section>

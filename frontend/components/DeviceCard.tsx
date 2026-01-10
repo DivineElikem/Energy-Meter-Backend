@@ -5,11 +5,12 @@ interface DeviceCardProps {
     name: string;
     status: 'normal' | 'warning' | 'anomaly';
     currentPower: number;
+    threshold: number;
     energyToday: number;
     lastUpdate: string;
 }
 
-export default function DeviceCard({ name, status, currentPower, energyToday, lastUpdate }: DeviceCardProps) {
+export default function DeviceCard({ name, status, currentPower, threshold, energyToday, lastUpdate }: DeviceCardProps) {
     const statusColors = {
         normal: 'text-green-500 bg-green-50',
         warning: 'text-yellow-500 bg-yellow-50',
@@ -25,7 +26,10 @@ export default function DeviceCard({ name, status, currentPower, energyToday, la
     return (
         <Link href={`/devices/${name}`} className="group bg-white rounded-3xl p-5 md:p-6 shadow-sm border border-slate-100 hover:border-blue-200 hover:shadow-lg transition-all duration-300">
             <div className="flex items-center justify-between mb-4 md:mb-6">
-                <h3 className="text-lg font-bold text-slate-900 capitalize">{name.replace('_', ' ')}</h3>
+                <div>
+                    <h3 className="text-lg font-bold text-slate-900 capitalize">{name.replace('_', ' ')}</h3>
+                    <p className="text-[10px] font-bold text-slate-400 mt-0.5 uppercase tracking-wider">Threshold: {threshold}W</p>
+                </div>
                 <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${statusColors[status]}`}>
                     {status === 'anomaly' ? <AlertCircle size={14} /> : <Activity size={14} />}
                     {statusLabels[status]}
